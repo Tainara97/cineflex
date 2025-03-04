@@ -2,44 +2,47 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import styled from "styled-components";
 import { useParams } from "react-router-dom";
+import { Link } from "react-router-dom";
 
-export default function Filmes() {
+export default function Sessoes() {
     const [sessoes, setSessoes] = useState(null);
     const { idFilme } = useParams()
 
     useEffect(() => {
         axios.get(`https://mock-api.driven.com.br/api/v8/cineflex/movies/${idFilme}/showtimes`)
             .then(response => setSessoes(response.data.days))
-            .catch (error => console.log(error.response.data))
-}, []);
+            .catch(error => console.log(error.response.data))
+    }, []);
 
-if (sessoes === null) {
+    if (sessoes === null) {
+        return (
+            <Container>
+                <Carregando>
+                    <img src="https://cdn.pixabay.com/animation/2023/08/11/21/18/21-18-05-265_512.gif" />
+                </Carregando>
+            </Container>
+        )
+    }
+
     return (
         <Container>
-            <Carregando>
-                <img src="https://cdn.pixabay.com/animation/2023/08/11/21/18/21-18-05-265_512.gif" />
-            </Carregando>
+            <h1>Selecione o horário</h1>
+            <EstiloSessoes>
+                {sessoes.map(sessao => (
+                    <Sessao key={sessao.id} >
+                        <p className="data">{sessao.weekday} {sessao.date}</p>
+                        <div className="horario">
+                            {sessao.showtimes.map(horario => (
+                                <EstiloLink key={horario.id} to={`/assentos/${horario.id}`}>
+                                   <p>{horario.name}</p> 
+                                </EstiloLink>
+                            ))}
+                        </div>
+                    </Sessao>
+                ))}
+            </EstiloSessoes>
         </Container>
     )
-}
-
-return (
-    <Container>
-        <h1>Selecione o horário</h1>
-        <EstiloSessoes>
-            {sessoes.map(sessao => (
-                <Sessao key={sessao.id}>
-                    <p className="data">{sessao.weekday} {sessao.date}</p>
-                    <div className="horario">
-                        {sessao.showtimes.map(horario => (
-                            <p key={horario.id}>{horario.name}</p>  
-                        ))}
-                     </div>
-                </Sessao>
-            ))}
-        </EstiloSessoes>
-    </Container>
-)
 }
 
 const Container = styled.div`
@@ -98,19 +101,26 @@ const Sessao = styled.div`
         width: 100%;
         display: flex;
         justify-content: space-evenly;
-        font-family: "Sarala", sans-serif;
-        font-size: 16px;
-        color: #EE897F;
         margin-bottom: 10px;
         padding: 10px;
+        
     }
 
     .horario p {
+        font-family: "Sarala", sans-serif;
+        font-size: 16px;
+        color: #EE897F;
         border: 2px solid #EE897F;
         padding: 5px 20px;
+        text-decoration: none;
     }
 
 `
+
+const EstiloLink = styled(Link) `
+    text-decoration: none;
+`
+
 
 const Carregando = styled.div`
     width: 100%;
