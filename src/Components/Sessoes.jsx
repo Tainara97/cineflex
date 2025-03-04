@@ -5,16 +5,21 @@ import { useParams } from "react-router-dom";
 import { Link } from "react-router-dom";
 
 export default function Sessoes() {
-    const [sessoes, setSessoes] = useState(null);
+    const [sessoes, setSessoes] = useState([]);
+    const [filme, setFilme] = useState(null);
     const { idFilme } = useParams()
 
     useEffect(() => {
         axios.get(`https://mock-api.driven.com.br/api/v8/cineflex/movies/${idFilme}/showtimes`)
-            .then(response => setSessoes(response.data.days))
+            .then(response => {
+                console.log(response.data);
+                setFilme(response.data);
+                setSessoes(response.data.days);
+            })
             .catch(error => console.log(error.response.data))
     }, []);
 
-    if (sessoes === null) {
+    if (!Array.isArray(sessoes) || sessoes.length === 0) {
         return (
             <Container>
                 <Carregando>
@@ -33,8 +38,12 @@ export default function Sessoes() {
                         <p className="data">{sessao.weekday} {sessao.date}</p>
                         <div className="horario">
                             {sessao.showtimes.map(horario => (
-                                <EstiloLink key={horario.id} to={`/assentos/${horario.id}`}>
-                                   <p>{horario.name}</p> 
+                               <EstiloLink key={horario.id} to={`/assentos/${horario.id}`} state={{ 
+                                filme: filme, 
+                                sessao: sessao,
+                                horarioSessao: horario.name
+                                }}>
+                                    <p>{horario.name}</p>
                                 </EstiloLink>
                             ))}
                         </div>
@@ -117,7 +126,7 @@ const Sessao = styled.div`
 
 `
 
-const EstiloLink = styled(Link) `
+const EstiloLink = styled(Link)`
     text-decoration: none;
 `
 

@@ -1,27 +1,31 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import styled from "styled-components";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 
 export default function Assentos() {
     const [assentos, setAssentos] = useState(null);
     const [assentosSelecionados, setAssentosSelecionados] = useState([]);
-    const { idSessao } = useParams()
     const [nomeComprador, setNomeComprador] = useState("");
     const [cpfComprador, setCpfComprador] = useState("");
+    const { filme, sessao, horarioSessao } = useLocation().state || {}
+    const { idSessao } = useParams()
+    const navigate = useNavigate();
 
     useEffect(() => {
         axios.get(`https://mock-api.driven.com.br/api/v8/cineflex/showtimes/${idSessao}/seats`)
-            .then(response => setAssentos(response.data.seats))
+            .then(response => {
+                setAssentos(response.data.seats);
+            })
             .catch(error => console.log(error.response.data))
     }, []);
 
     const selecionarAssento = assento => {
         if (assento.isAvailable) {
-            setAssentosSelecionados (
-                assentosSelecionados.includes(assento.id) 
-                ? assentosSelecionados.filter(id => id !== assento.id)
-                : [...assentosSelecionados, assento.id] 
+            setAssentosSelecionados(
+                assentosSelecionados.includes(assento.id)
+                    ? assentosSelecionados.filter(id => id !== assento.id)
+                    : [...assentosSelecionados, assento.id]
             );
         } else {
             alert("Este assento não está disponível!");
@@ -36,6 +40,30 @@ export default function Assentos() {
                 </Carregando>
             </Container>
         )
+    }
+
+    function enviarFormulario(event) {
+        event.preventDefault()
+        const body = {
+            name: nomeComprador, cpf: cpfComprador, ids: assentosSelecionados.map(id => id)
+        }
+
+        axios.post("https://mock-api.driven.com.br/api/v8/cineflex/seats/book-many", body)
+            .then(res => {
+                navigate("/sucesso", {
+                    state: {
+                        tituloFilme: filme.title,
+                        sessaoFilme: sessao.name,
+                        dataSessao: sessao.date,
+                        horarioSessao: horarioSessao,
+                        assentoSessao: assentosSelecionados.map(id => assentos.find(a => a.id === id)?.name),
+                        nomeComprador,
+                        cpfComprador
+                    }
+                })
+            })
+            .catch(err =>
+                console.error(err.response.data))
     }
 
     return (
@@ -63,7 +91,7 @@ export default function Assentos() {
                 ))}
             </EstiloAssentos>
             <ContainerInputs>
-                <form>
+                <form onSubmit={enviarFormulario}>
                     <InputGroup>
                         <Title htmlFor="nome">
                             Nome do comprador(a)
@@ -145,7 +173,6 @@ const ContainerInputs = styled.div`
     }
     
 `
-
 const InputGroup = styled.div`
     display: flex;
     flex-direction: column;
@@ -203,7 +230,3 @@ const Carregando = styled.div`
     }
    
 `
-
-
-
-
